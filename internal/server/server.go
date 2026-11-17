@@ -32,6 +32,8 @@ var loadServerStats = func(s *store.Store) (*store.Stats, error) {
 	return s.Stats()
 }
 
+var checkServerReadiness = (*store.Store).CheckReadiness
+
 // SyncStatusProvider returns the current sync status. This is implemented
 // by autosync.Manager and injected from cmd/engram/main.go.
 type SyncStatusProvider interface {
@@ -495,7 +497,7 @@ func (s *Server) routes() {
 // ─── Handlers ────────────────────────────────────────────────────────────────
 
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
-	if _, err := s.store.Stats(); err != nil {
+	if err := checkServerReadiness(s.store); err != nil {
 		jsonError(w, http.StatusInternalServerError, "health check failed")
 		return
 	}
