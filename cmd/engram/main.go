@@ -881,10 +881,12 @@ func cmdServe(cfg store.Config) {
 		return
 	}
 
+	storeStart := time.Now()
 	s, err := storeNew(cfg)
 	if err != nil {
 		fatal(err)
 	}
+	log.Printf("[engram] store startup completed in %s", time.Since(storeStart))
 	defer s.Close()
 
 	srv := newHTTPServer(s, options.port)
@@ -907,7 +909,9 @@ func cmdServe(cfg store.Config) {
 	// handler can call mgrStop() before os.Exit, giving the manager time to
 	// release its sync lease.
 	fallback := storeSyncStatusProvider{store: s, defaultProject: resolveServeSyncStatusProject(), cfg: cfg}
+	autosyncStart := time.Now()
 	mgr, mgrStop := tryStartAutosync(ctx, s, cfg)
+	log.Printf("[engram] autosync startup completed in %s", time.Since(autosyncStart))
 	if mgr != nil {
 		srv.SetSyncStatus(&autosyncStatusAdapter{mgr: mgr, fallback: fallback})
 	} else {
